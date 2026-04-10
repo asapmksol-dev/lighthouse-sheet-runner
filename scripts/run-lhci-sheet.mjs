@@ -96,17 +96,34 @@ for (const target of targets) {
   });
 }
 
-const saveResponse = await fetchJson(APPS_SCRIPT_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    key: APPS_SCRIPT_KEY,
-    results,
-  }),
-});
+let rowsSaved = 0;
 
-if (!saveResponse.ok) {
-  throw new Error(saveResponse.error || 'Failed to save results.');
+for (const result of results) {
+  const saveUrl = new URL(APPS_SCRIPT_URL);
+  saveUrl.searchParams.set('key', APPS_SCRIPT_KEY);
+  saveUrl.searchParams.set('action', 'save');
+  saveUrl.searchParams.set('timestamp', result.timestamp || '');
+  saveUrl.searchParams.set('label', result.label || '');
+  saveUrl.searchParams.set('url', result.url || '');
+  saveUrl.searchParams.set('strategy', result.strategy || '');
+  saveUrl.searchParams.set('performance', String(result.performance ?? ''));
+  saveUrl.searchParams.set('accessibility', String(result.accessibility ?? ''));
+  saveUrl.searchParams.set('bestPractices', String(result.bestPractices ?? ''));
+  saveUrl.searchParams.set('seo', String(result.seo ?? ''));
+  saveUrl.searchParams.set('fcpMs', String(result.fcpMs ?? ''));
+  saveUrl.searchParams.set('lcpMs', String(result.lcpMs ?? ''));
+  saveUrl.searchParams.set('tbtMs', String(result.tbtMs ?? ''));
+  saveUrl.searchParams.set('cls', String(result.cls ?? ''));
+  saveUrl.searchParams.set('source', result.source || 'github-lhci-psi');
+
+  const saveResponse = await fetchJson(saveUrl.toString());
+
+  if (!saveResponse.ok) {
+    throw new Error(saveResponse.error || 'Failed to save one result row.');
+  }
+
+  rowsSaved += 1;
 }
 
-console.log(`Saved ${results.length} rows.`);
+console.log(`Saved ${rowsSaved} rows.`);
+

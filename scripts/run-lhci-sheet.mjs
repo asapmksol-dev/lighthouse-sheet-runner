@@ -34,7 +34,10 @@ function round(value, digits = 0) {
   return Number(value.toFixed(digits));
 }
 
-const urlWithKey = `${APPS_SCRIPT_URL}?key=${encodeURIComponent(APPS_SCRIPT_KEY)}`;
+//const urlWithKey = `${APPS_SCRIPT_URL}?key=${encodeURIComponent(APPS_SCRIPT_KEY)}`;
+const urlObj = new URL(APPS_SCRIPT_URL);
+urlObj.searchParams.set('key', APPS_SCRIPT_KEY);
+const urlWithKey = urlObj.toString();
 const targetPayload = await fetchJson(urlWithKey);
 
 if (!targetPayload.ok) {

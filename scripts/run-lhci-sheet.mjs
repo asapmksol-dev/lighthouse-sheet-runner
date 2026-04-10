@@ -17,12 +17,12 @@ function runNpx(args) {
   });
 }
 
-async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`);
-  }
-  return response.json();
+function fetchJsonCurl(url) {
+  const output = execFileSync('curl', ['-L', '--silent', '--show-error', url], {
+    encoding: 'utf8',
+    env: process.env,
+  });
+  return JSON.parse(output);
 }
 
 function scoreTo100(score) {
@@ -38,7 +38,7 @@ function round(value, digits = 0) {
 const urlObj = new URL(APPS_SCRIPT_URL);
 urlObj.searchParams.set('key', APPS_SCRIPT_KEY);
 const urlWithKey = urlObj.toString();
-const targetPayload = await fetchJson(urlWithKey);
+const targetPayload = fetchJsonCurl(urlWithKey);
 
 if (!targetPayload.ok) {
   throw new Error(targetPayload.error || 'Failed to load targets.');
@@ -116,7 +116,7 @@ for (const result of results) {
   saveUrl.searchParams.set('cls', String(result.cls ?? ''));
   saveUrl.searchParams.set('source', result.source || 'github-lhci-psi');
 
-  const saveResponse = await fetchJson(saveUrl.toString());
+  const saveResponse = fetchJsonCurl(saveUrl.toString());
 
   if (!saveResponse.ok) {
     throw new Error(saveResponse.error || 'Failed to save one result row.');

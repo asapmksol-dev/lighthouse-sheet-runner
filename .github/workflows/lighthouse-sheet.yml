@@ -1,0 +1,29 @@
+name: Lighthouse Sheet Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+      timezone: 'America/Chicago'
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Lighthouse CI from Sheet
+        env:
+          APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
+          APPS_SCRIPT_KEY: ${{ secrets.APPS_SCRIPT_KEY }}
+          PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
+        run: node scripts/run-lhci-sheet.mjs

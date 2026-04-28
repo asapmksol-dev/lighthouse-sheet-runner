@@ -3,8 +3,8 @@ name: Lighthouse Sheet Runner
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'
-      timezone: 'America/Chicago'
+  - cron: '0 6 * * 1'
+    timezone: 'America/Chicago'
 
 jobs:
   lighthouse:

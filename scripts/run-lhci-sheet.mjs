@@ -46,55 +46,59 @@ if (!targetPayload.ok) {
 
 const targets = Array.isArray(targetPayload.targets) ? targetPayload.targets : [];
 const results = [];
+const STRATEGIES = ['mobile', 'desktop'];
 
 for (const target of targets) {
   console.log(`::add-mask::${target.url}`);
 
-  fs.rmSync('.lighthouseci', { recursive: true, force: true });
-  fs.rmSync('lhci-out', { recursive: true, force: true });
+  for (const strategy of STRATEGIES) {
+    fs.rmSync('.lighthouseci', { recursive: true, force: true });
+    fs.rmSync('lhci-out', { recursive: true, force: true });
 
-  runNpx([
-    '-y',
-    '@lhci/cli@latest',
-    'collect',
-    '--method=psi',
-    `--psiApiKey=${PSI_API_KEY}`,
-    '--psiStrategy=mobile',
-    '--numberOfRuns=3',
-    `--url=${target.url}`,
-  ]);
+    runNpx([
+      '-y',
+      '@lhci/cli@latest',
+      'collect',
+      '--method=psi',
+      `--psiApiKey=${PSI_API_KEY}`,
+      `--psiStrategy=${strategy}`,
+      '--numberOfRuns=3',
+      `--url=${target.url}`,
+    ]);
 
-  runNpx([
-    '-y',
-    '@lhci/cli@latest',
-    'upload',
-    '--target=filesystem',
-    '--outputDir=./lhci-out',
-  ]);
+    runNpx([
+      '-y',
+      '@lhci/cli@latest',
+      'upload',
+      '--target=filesystem',
+      '--outputDir=./lhci-out',
+    ]);
 
-  const manifest = JSON.parse(
-    fs.readFileSync(path.resolve('lhci-out/manifest.json'), 'utf8')
-  );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.resolve('lhci-out/manifest.json'), 'utf8')
+    );
 
-  const representative = manifest.find(item => item.isRepresentativeRun) || manifest[0];
-  const report = JSON.parse(fs.readFileSync(representative.jsonPath, 'utf8'));
+    const representative = manifest.find(item => item.isRepresentativeRun) || manifest[0];
+    const report = JSON.parse(fs.readFileSync(representative.jsonPath, 'utf8'));
 
-  results.push({
-    timestamp: new Date().toISOString(),
-    label: target.label || '',
-    url: target.url,
-    strategy: 'mobile',
-    performance: scoreTo100(report.categories.performance?.score),
-    accessibility: scoreTo100(report.categories.accessibility?.score),
-    bestPractices: scoreTo100(report.categories['best-practices']?.score),
-    seo: scoreTo100(report.categories.seo?.score),
-    fcpMs: round(report.audits['first-contentful-paint']?.numericValue),
-    lcpMs: round(report.audits['largest-contentful-paint']?.numericValue),
-    tbtMs: round(report.audits['total-blocking-time']?.numericValue),
-    cls: round(report.audits['cumulative-layout-shift']?.numericValue, 3),
-    source: 'github-lhci-psi',
-  });
+    results.push({
+      timestamp: new Date().toISOString(),
+      label: target.label || '',
+      url: target.url,
+      strategy,
+      performance: scoreTo100(report.categories.performance?.score),
+      accessibility: scoreTo100(report.categories.accessibility?.score),
+      bestPractices: scoreTo100(report.categories['best-practices']?.score),
+      seo: scoreTo100(report.categories.seo?.score),
+      fcpMs: round(report.audits['first-contentful-paint']?.numericValue),
+      lcpMs: round(report.audits['largest-contentful-paint']?.numericValue),
+      tbtMs: round(report.audits['total-blocking-time']?.numericValue),
+      cls: round(report.audits['cumulative-layout-shift']?.numericValue, 3),
+      source: 'github-lhci-psi',
+    });
+  }
 }
+
 
 let rowsSaved = 0;
 
